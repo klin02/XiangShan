@@ -93,6 +93,7 @@ class VecPipedFuncUnit(cfg: FuConfig)(implicit p: Parameters) extends FuncUnit(c
       )
     )
   }
+  protected val maskBits    = inData.src(3)
 
   override def latency: Int = cfg.latency.latencyVal.get
 

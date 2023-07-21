@@ -105,7 +105,6 @@ class VIPU(cfg: FuConfig)(implicit p: Parameters) extends VecPipedFuncUnit(cfg) 
   // modules
   private val decoder = Module(new VIAluDecoder)
   private val vialu   = Module(new VIAlu)
-  private val mgu     = Module(new Mgu(dataWidth))
   
   /**
   * [[decoder]]'s in connection
@@ -136,27 +135,8 @@ class VIPU(cfg: FuConfig)(implicit p: Parameters) extends VecPipedFuncUnit(cfg) 
                                            ((!needClearVs1) && (!needShiftVs1)) -> vs1))
       subIO.in.bits.vs2         := vs2
       subIO.in.bits.old_vd      := oldVd
-      subIO.in.bits.mask        := outSrcMask
+      subIO.in.bits.mask        := maskBits
   }
 
-  /**
-  * [[mgu]]'s in connection
-  */
-  private val outVd = vialu.io.out.bits.vd
-  private val outWiden = fuOpType === VipuType.vwredsumu_vs || fuOpType === VipuType.vwredsum_vs
-  private val outEew = Mux(outWiden, outVecCtrl.vsew + 1.U, outVecCtrl.vsew)
-
-  mgu.io.in.vd           := outVd
-  mgu.io.in.oldVd        := outOldVd
-  mgu.io.in.mask         := outSrcMask
-  mgu.io.in.info.ta      := outVecCtrl.vta
-  mgu.io.in.info.ma      := outVecCtrl.vma
-  mgu.io.in.info.vl      := outVl
-  mgu.io.in.info.vstart  := outVecCtrl.vstart
-  mgu.io.in.info.eew     := outEew
-  mgu.io.in.info.vdIdx   := outVecCtrl.vuopIdx
-  mgu.io.in.info.narrow  := 0.B
-  mgu.io.in.info.dstMask := 0.B
-
-  io.out.bits.res.data := mgu.io.out.vd
+  io.out.bits.res.data := vialu.io.out.bits.vd
 }
