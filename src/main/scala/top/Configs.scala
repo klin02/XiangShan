@@ -463,6 +463,18 @@ class XSNoCTopMinimalConfig(n: Int = 1) extends Config(
   })
 )
 
+class XSNoCDiffTopConfig(n: Int = 1) extends Config(
+  (new XSNoCTopConfig(n)).alter((site, here, up) => {
+    case SoCParamsKey => up(SoCParamsKey).copy(UseXSNoCDiffTop = true)
+  })
+)
+
+class XSNoCDiffTopMinimalConfig(n: Int = 1) extends Config(
+  (new XSNoCTopConfig(n)).alter((site, here, up) => {
+    case SoCParamsKey => up(SoCParamsKey).copy(UseXSNoCDiffTop = true)
+  })
+)
+
 class FpgaDefaultConfig(n: Int = 1) extends Config(
   (new WithNKBL3(3 * 1024, inclusive = false, banks = 1, ways = 6)
     ++ new WithNKBL2(2 * 512, inclusive = true, banks = 4)
