@@ -630,7 +630,6 @@ class CtrlBlockImp(
   memCtrl.io.mdpFlodPcVec := mdpFlodPcVec
   memCtrl.io.dispatchLFSTio <> dispatch.io.lfst
 
-  rat.io.hartId := io.fromTop.hartId
   rat.io.redirect := s1_s3_redirect.valid
   rat.io.rabCommits := rob.io.rabCommits
   rat.io.diffRatCommitRobIdx.foreach(_ := rob.io.diffRatCommitRobIdx.get)
@@ -793,6 +792,9 @@ class CtrlBlockImp(
   // rob to mem block
   io.robio.lsq <> rob.io.lsq
 
+  io.diff_int_rat.foreach(_ := rat.io.diff_int_rat.get)
+  io.diff_fp_rat .foreach(_ := rat.io.diff_fp_rat.get)
+  io.diff_vec_rat.foreach(_ := rat.io.diff_vec_rat.get)
   io.diff_vl_rat .foreach(_ := rat.io.diff_vl_rat.get)
 
   rob.io.debug_ls := io.robio.debug_ls
@@ -988,7 +990,11 @@ class CtrlBlockIO()(implicit p: Parameters, params: BackendParams) extends XSBun
       val lsdqFull  = Bool()
     }
   })
-  val diff_vl_rat  = if (params.basicDebugEn) Some(Vec(1, Output(UInt(PhyRegIdxWidth.W)))) else None
+  val diff_int_rat = if (params.basicDebugEn) Some(Vec(32, Output(UInt(PhyRegIdxWidth.W)))) else None
+  val diff_fp_rat  = if (params.basicDebugEn) Some(Vec(32, Output(UInt(PhyRegIdxWidth.W)))) else None
+  val diff_vec_rat =
+    if (params.basicDebugEn) Some(Vec(64, Output(UInt(log2Up(2 * (V0PhyRegs + VfPhyRegs)).W)))) else None
+  val diff_vl_rat = if (params.basicDebugEn) Some(Vec(1, Output(UInt(PhyRegIdxWidth.W)))) else None
 
   val sqCanAccept = Input(Bool())
   val lqCanAccept = Input(Bool())

@@ -303,10 +303,9 @@ class DataPathImp(override val wrapper: DataPath)(implicit p: Parameters, params
     debugAllRData = intDiffReadData
   )
   if (env.AlwaysBasicDiff || env.EnableDifftest) {
-    // Delay of PhyRegFile should be same as RenameTable
-    val difftest = DifftestModule(new DiffPhyIntRegState(intSchdParams.numPregs), delay = 2)
+    val difftest = DifftestModule(new DiffArchIntRegState, delay = 2)
     difftest.coreid := io.hartId
-    difftest.value := intDiffReadData.get
+    difftest.value := VecInit(io.diffIntRat.get.map(rat => intDiffReadData.get(rat)))
   }
 
   FpRegFileSplit("FpRegFile", fpSchdParams.numPregs, splitNum = 4, fpRfRaddr, fpRfRdata, fpRfWen, fpRfWaddr, fpRfWdata,
@@ -314,9 +313,9 @@ class DataPathImp(override val wrapper: DataPath)(implicit p: Parameters, params
     debugAllRData = fpDiffReadData
   )
   if (env.AlwaysBasicDiff || env.EnableDifftest) {
-    val difftest = DifftestModule(new DiffPhyFpRegState(fpSchdParams.numPregs), delay = 2)
+    val difftest = DifftestModule(new DiffArchFpRegState, delay = 2)
     difftest.coreid := io.hartId
-    difftest.value := fpDiffReadData.get
+    difftest.value := VecInit(io.diffFpRat.get.map(rat => fpDiffReadData.get(rat)))
   }
 
   VfRegFile("VfRegFile", vfSchdParams.numPregs, vfRfSplitNum, vfRfRaddr, vfRfRdata, vfRfWen, vfRfWaddr, vfRfWdata,
@@ -326,9 +325,9 @@ class DataPathImp(override val wrapper: DataPath)(implicit p: Parameters, params
     debugAllRData = v0DiffReadData
   )
   if (env.AlwaysBasicDiff || env.EnableDifftest) {
-    val difftest = DifftestModule(new DiffPhyVecRegState(vecDiffNumPregs), delay = 2)
+    val difftest = DifftestModule(new DiffArchVecRegState, delay = 2)
     difftest.coreid := io.hartId
-    difftest.value := vecDiffReadData.get
+    difftest.value := VecInit(io.diffVecRat.get.map(rat => vecDiffReadData.get(rat)))
   }
 
   FpRegFile("VlRegFile", VlPhyRegs, vlRfRaddr, vlRfRdata, vlRfWen, vlRfWaddr, vlRfWdata,
@@ -953,8 +952,12 @@ class DataPathIO()(implicit p: Parameters, params: BackendParams) extends XSBund
     Output(UInt(RegCacheIdxWidth.W))
   )
 
-  val diffVlRat  = if (params.basicDebugEn) Some(Input(Vec(1, UInt(log2Up(VlPhyRegs).W)))) else None
-  val diffVl     = if (params.basicDebugEn) Some(Output(UInt(VlData().dataWidth.W))) else None
+  val diffIntRat = if (params.basicDebugEn) Some(Input(Vec(32, UInt(PhyRegIdxWidth.W)))) else None
+  val diffFpRat  = if (params.basicDebugEn) Some(Input(Vec(32, UInt(PhyRegIdxWidth.W)))) else None
+  val diffVecRat =
+    if (params.basicDebugEn) Some(Input(Vec(64, UInt(log2Up(2 * (V0PhyRegs + VfPhyRegs)).W)))) else None
+  val diffVlRat = if (params.basicDebugEn) Some(Input(Vec(1, UInt(log2Up(VlPhyRegs).W)))) else None
+  val diffVl    = if (params.basicDebugEn) Some(Output(UInt(VlData().dataWidth.W))) else None
 
   val topDownInfo = new TopDownInfo
 }
