@@ -52,7 +52,7 @@ object ArgParser {
       |--disable-alwaysdb
       |--disable-clockgate
       |--external-llc
-      |--llc-async
+      |--async-llc
       |--enable-dfx
       |--dump-csr
       |--imsic-bus-type <NONE|TL|AXI>
@@ -164,7 +164,7 @@ object ArgParser {
           nextOption(config.alter((site, here, up) => {
             case XSTileKey => up(XSTileKey).map(_.copy(EnableClockGate = false))
           }), tail)
-        case ("--llc-async" | "--external-llc-async") :: tail =>
+        case ("--async-llc" | "--llc-async" | "--external-llc-async") :: tail =>
           nextOption(config.alter((_, _, up) => {
             case XSTopLLCAsyncKey => true
             case L2ParamKey => up(L2ParamKey).copy(txSourceReady = true)
