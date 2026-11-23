@@ -19,6 +19,7 @@ package top
 
 import org.chipsalliance.cde.config.{Config, Parameters}
 import system.SoCParamsKey
+import coupledL2.L2ParamKey
 import xiangshan.{DebugOptionsKey, DFTOptionsKey, XSTileKey}
 import freechips.rocketchip.tile.MaxHartIdBits
 import difftest.DifftestModule
@@ -51,6 +52,7 @@ object ArgParser {
       |--disable-alwaysdb
       |--disable-clockgate
       |--external-llc
+      |--llc-async
       |--enable-dfx
       |--dump-csr
       |--imsic-bus-type <NONE|TL|AXI>
@@ -161,6 +163,11 @@ object ArgParser {
         case "--disable-clockgate" :: tail =>
           nextOption(config.alter((site, here, up) => {
             case XSTileKey => up(XSTileKey).map(_.copy(EnableClockGate = false))
+          }), tail)
+        case ("--llc-async" | "--external-llc-async") :: tail =>
+          nextOption(config.alter((_, _, up) => {
+            case XSTopLLCAsyncKey => true
+            case L2ParamKey => up(L2ParamKey).copy(txSourceReady = true)
           }), tail)
         case "--external-llc" :: tail =>
           nextOption(config.alter((site, here, up) => {

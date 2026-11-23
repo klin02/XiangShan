@@ -14,6 +14,7 @@ import utility.ResetGen
 import utils.VerilogAXI4Record
 
 case object UseExternalLLCKey extends Field[Boolean](false)
+case object XSTopLLCAsyncKey extends Field[Boolean](false)
 
 object ExternalLLCAddressMap {
   val Control = AddressSet(0x20000000L, 0x0fffffffL)
