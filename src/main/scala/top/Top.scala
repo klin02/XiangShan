@@ -108,6 +108,7 @@ class XSTop()(implicit p: Parameters) extends BaseXSSoc()
   println(s"FPGASoC cores: $NumCores banks: $L3NBanks block size: $L3BlockSize bus size: $L3OuterBusWidth")
 
   val core_with_l2 = tiles.map { coreParams =>
+    // Copy once per tile so CDE lookups share the same mutable backend parameters.
     val tileParams = coreParams.copy(
       L2CacheParamsOpt = coreParams.L2CacheParamsOpt.map(_.copy(txSourceReady = useCHIAsyncBridge))
     )
