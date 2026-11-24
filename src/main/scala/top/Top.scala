@@ -26,7 +26,7 @@ import utils._
 import utility._
 import utility.sram.SramBroadcastBundle
 import huancun.{HCCacheParameters, HCCacheParamsKey, HuanCun, PrefetchRecv, TPmetaResp}
-import coupledL2.EnableCHI
+import coupledL2.{EnableCHI, L2ParamKey}
 import coupledL2.tl2chi.{CHIAsyncBridgeSink, CHIAsyncBridgeSource, CHILogger, PortIO}
 import openLLC.{OpenLLC, OpenLLCParamKey, OpenNCB}
 import openLLC.TargetBinder._
@@ -42,7 +42,7 @@ import freechips.rocketchip.tilelink._
 import freechips.rocketchip.interrupts._
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.jtag.JTAGIO
-import freechips.rocketchip.util.{AsyncQueueParams, AsyncQueueSink, AsyncResetSynchronizerShiftReg}
+import freechips.rocketchip.util.{AsyncQueueParams, AsyncQueueSink}
 import chisel3.experimental.annotate
 import sifive.enterprise.firrtl.NestedPrefixModulesAnnotation
 
@@ -107,12 +107,16 @@ class XSTop()(implicit p: Parameters) extends BaseXSSoc()
 
   println(s"FPGASoC cores: $NumCores banks: $L3NBanks block size: $L3BlockSize bus size: $L3OuterBusWidth")
 
-  val core_with_l2 = tiles.map(coreParams =>
+  val core_with_l2 = tiles.map { coreParams =>
+    val tileParams = coreParams.copy(
+      L2CacheParamsOpt = coreParams.L2CacheParamsOpt.map(_.copy(txSourceReady = useCHIAsyncBridge))
+    )
     LazyModule(new XSTile()(p.alter((site, here, up) => {
-      case XSCoreParamsKey => coreParams
+      case XSCoreParamsKey => tileParams
+      case L2ParamKey => up(L2ParamKey).copy(txSourceReady = useCHIAsyncBridge)
       case PerfCounterOptionsKey => up(PerfCounterOptionsKey).copy(perfDBHartID = coreParams.HartId)
     })))
-  )
+  }
 
   val l3cacheOpt = soc.L3CacheParamsOpt.map(l3param =>
     LazyModule(new HuanCun()(new Config((_, _, _) => {
@@ -585,9 +589,7 @@ class XSTop()(implicit p: Parameters) extends BaseXSSoc()
             openLLC.io.debugTopDown.robHeadPaddr := 0.U.asTypeOf(openLLC.io.debugTopDown.robHeadPaddr)
             core_with_l2.foreach { tile =>
               tile.module.io.debugTopDown.l3MissMatch := false.B
-              tile.module.io.l3Miss := withClockAndReset(tile.module.clock, tile.module.reset) {
-                AsyncResetSynchronizerShiftReg(openLLC.io.l3Miss, 3, 0)
-              }
+              tile.module.io.l3Miss := false.B
             }
           } else {
             openLLC.io.debugTopDown.robHeadPaddr := core_with_l2.map(_.module.io.debugTopDown.robHeadPaddr)

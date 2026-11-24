@@ -19,7 +19,6 @@ package top
 
 import org.chipsalliance.cde.config.{Config, Parameters}
 import system.SoCParamsKey
-import coupledL2.L2ParamKey
 import xiangshan.{DebugOptionsKey, DFTOptionsKey, XSTileKey}
 import freechips.rocketchip.tile.MaxHartIdBits
 import difftest.DifftestModule
@@ -165,9 +164,8 @@ object ArgParser {
             case XSTileKey => up(XSTileKey).map(_.copy(EnableClockGate = false))
           }), tail)
         case "--async-llc" :: tail =>
-          nextOption(config.alter((_, _, up) => {
+          nextOption(config.alter((_, _, _) => {
             case XSTopLLCAsyncKey => true
-            case L2ParamKey => up(L2ParamKey).copy(txSourceReady = true)
           }), tail)
         case "--external-llc" :: tail =>
           nextOption(config.alter((site, here, up) => {
